@@ -1,28 +1,17 @@
-import 'package:first_flutter_app/firebase_options.dart';
-import 'package:first_flutter_app/views/login_view.dart';
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(MaterialApp(
-    title: 'Flutter Demo',
-    theme: ThemeData(
-      primarySwatch: Colors.blue,
-    ),
-    home: const LoginView(),
-  ));
-}
+import '../firebase_options.dart';
 
-class RegisterView extends StatefulWidget {
-  const RegisterView({Key? key}) : super(key: key);
+class LoginView extends StatefulWidget {
+  const LoginView({Key? key}) : super(key: key);
 
   @override
-  State<RegisterView> createState() => _RegisterViewState();
+  State<LoginView> createState() => _LoginViewState();
 }
 
-class _RegisterViewState extends State<RegisterView> {
+class _LoginViewState extends State<LoginView> {
   late final TextEditingController _email;
   late final TextEditingController _password;
 
@@ -43,7 +32,7 @@ class _RegisterViewState extends State<RegisterView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Register')),
+      appBar: AppBar(title: Text('Login')),
       body: FutureBuilder(
           future: Firebase.initializeApp(
               options: DefaultFirebaseOptions.currentPlatform),
@@ -58,7 +47,7 @@ class _RegisterViewState extends State<RegisterView> {
                       enableSuggestions: false,
                       keyboardType: TextInputType.emailAddress,
                       decoration:
-                          const InputDecoration(hintText: 'Enter email'),
+                      const InputDecoration(hintText: 'Enter email'),
                     ),
                     TextField(
                         controller: _password,
@@ -67,19 +56,24 @@ class _RegisterViewState extends State<RegisterView> {
                         obscureText: true,
                         keyboardType: TextInputType.visiblePassword,
                         decoration:
-                            const InputDecoration(hintText: 'Enter password')),
+                        const InputDecoration(hintText: 'Enter password')),
                     TextButton(
                         onPressed: () async {
+                          try {
+                            final email = _email.text;
+                            final password = _password.text;
 
-                          final email = _email.text;
-                          final password = _password.text;
-
-                          final userCredential = FirebaseAuth.instance
-                              .createUserWithEmailAndPassword(
-                                  email: email, password: password);
-                          print(userCredential);
+                            final userCredential = FirebaseAuth.instance
+                                .signInWithEmailAndPassword(
+                                email: email, password: password);
+                            print(userCredential);
+                          } on FirebaseAuthException catch(e){
+                            if(e.code == 'user-not-found') {
+                              print(e.code);
+                            }
+                          }
                         },
-                        child: const Text('Create an account')),
+                        child: const Text('Login')),
                   ],
                 );
               default:
