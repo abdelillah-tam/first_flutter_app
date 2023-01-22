@@ -33,7 +33,7 @@ class _RegisterViewState extends State<RegisterView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Register')),
+      appBar: AppBar(title: const Text('Register')),
       body: FutureBuilder(
           future: Firebase.initializeApp(
               options: DefaultFirebaseOptions.currentPlatform),
@@ -70,6 +70,10 @@ class _RegisterViewState extends State<RegisterView> {
                           print(userCredential);
                         },
                         child: const Text('Create an account')),
+                    TextButton(onPressed: () {
+                      Navigator.of(context)
+                          .pushNamedAndRemoveUntil('/login/', (route) => false);
+                    }, child: const Text('Already registered? Log in here!'))
                   ],
                 );
               default:
