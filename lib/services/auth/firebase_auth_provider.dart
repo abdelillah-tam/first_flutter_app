@@ -49,12 +49,27 @@ class FirebaseAuthProvider implements AuthProvider {
     required String email,
     required String password,
   }) async {
-    await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
-    final user = currentUser;
-    if (user != null){
-      return user;
-    }else{
-      throw UserNotLoggedInAuthException();
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email, password: password);
+      final user = currentUser;
+      if (user != null) {
+        return user;
+      } else {
+        throw UserNotLoggedInAuthException();
+      }
+    }on FirebaseAuthException catch(e){
+      if (e.code == 'user-not-found') {
+        throw UserNotFoundAuthException();
+      } else if (e.code == 'invalid-email') {
+        throw InvalidEmailAuthException();
+      } else if (e.code == 'wrong-password') {
+        throw WrongPasswordAuthException();
+      } else {
+        throw GenericAuthException();
+      }
+    }catch (_){
+      throw GenericAuthException();
     }
   }
 
