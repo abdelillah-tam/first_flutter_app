@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:first_flutter_app/constants/routes.dart';
+import 'package:first_flutter_app/services/auth/auth_user.dart';
 import 'package:first_flutter_app/views/login_view.dart';
 import 'package:first_flutter_app/views/register_view.dart';
 import 'package:first_flutter_app/views/verfiy_email_view.dart';
@@ -19,9 +20,11 @@ void main() {
     routes: {
       loginRoute: (context) => const LoginView(),
       registerRoute: (context) => const RegisterView(),
-      noteRoute: (context) => const NotesView()
+      noteRoute: (context) => const NotesView(),
+      verifyEmailRoute: (context) => const VerifyEmailView()
     },
   ));
+
 }
 
 class HomePage extends StatelessWidget {

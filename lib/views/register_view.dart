@@ -1,7 +1,7 @@
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:first_flutter_app/constants/routes.dart';
+import 'package:first_flutter_app/utilities/show_error_dialog.dart';
 import 'package:flutter/material.dart';
 
 import '../firebase_options.dart';
@@ -49,7 +49,7 @@ class _RegisterViewState extends State<RegisterView> {
                       enableSuggestions: false,
                       keyboardType: TextInputType.emailAddress,
                       decoration:
-                      const InputDecoration(hintText: 'Enter email'),
+                          const InputDecoration(hintText: 'Enter email'),
                     ),
                     TextField(
                         controller: _password,
@@ -58,23 +58,41 @@ class _RegisterViewState extends State<RegisterView> {
                         obscureText: true,
                         keyboardType: TextInputType.visiblePassword,
                         decoration:
-                        const InputDecoration(hintText: 'Enter password')),
+                            const InputDecoration(hintText: 'Enter password')),
                     TextButton(
                         onPressed: () async {
-
                           final email = _email.text;
                           final password = _password.text;
-
-                          final userCredential = FirebaseAuth.instance
-                              .createUserWithEmailAndPassword(
-                              email: email, password: password);
-                          print(userCredential);
+                          try {
+                            await FirebaseAuth.instance
+                                .createUserWithEmailAndPassword(
+                                    email: email, password: password);
+                            final user = FirebaseAuth.instance.currentUser;
+                            await user?.sendEmailVerification();
+                            Navigator.of(context).pushNamed(verifyEmailRoute);
+                          } on FirebaseAuthException catch (e) {
+                            if (e.code == 'weak-password') {
+                              await showErrorDialog(context, 'Weak password');
+                            } else if (e.code == 'email-already-in-use') {
+                              await showErrorDialog(
+                                  context, 'Email is already in use');
+                            } else if (e.code == 'invalid-email') {
+                              await showErrorDialog(
+                                  context, 'Invalid email address');
+                            } else {
+                              await showErrorDialog(
+                                  context, 'Error: ${e.code}');
+                            }
+                          } catch (e) {}
+                          ;
                         },
                         child: const Text('Create an account')),
-                    TextButton(onPressed: () {
-                      Navigator.of(context)
-                          .pushNamedAndRemoveUntil(loginRoute, (route) => false);
-                    }, child: const Text('Already registered? Log in here!'))
+                    TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pushNamedAndRemoveUntil(
+                              loginRoute, (route) => false);
+                        },
+                        child: const Text('Already registered? Log in here!'))
                   ],
                 );
               default:
