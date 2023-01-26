@@ -29,7 +29,7 @@ class FirebaseAuthProvider implements AuthProvider {
       } else {
         throw GenericAuthException();
       }
-    } catch (_) {
+    } catch (e) {
       throw GenericAuthException();
     }
   }
@@ -68,15 +68,19 @@ class FirebaseAuthProvider implements AuthProvider {
       } else {
         throw GenericAuthException();
       }
-    }catch (_){
+    }catch (e){
       throw GenericAuthException();
     }
   }
 
   @override
-  Future<void> logout() {
-    // TODO: implement logout
-    throw UnimplementedError();
+  Future<void> logout() async{
+    final user = FirebaseAuth.instance.currentUser;
+    if(user != null) {
+      FirebaseAuth.instance.signOut();
+    }else{
+      throw UserNotLoggedInAuthException();
+    }
   }
 
   @override
