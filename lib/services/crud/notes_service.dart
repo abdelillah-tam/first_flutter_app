@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' show join;
+import 'package:first_flutter_app/extensions/list/filter.dart';
 
 import 'crud_exceptions.dart';
 
@@ -12,27 +13,46 @@ class NotesService {
 
   List<DatabaseNote> _notes = [];
 
-  late final _notesStreamController;
+  DatabaseUser? _user;
 
-  Stream<List<DatabaseNote>> get allNotes => _notesStreamController.stream;
-
-  static final NotesService _shared = NotesService._sharedInstance();
+  late final StreamController<List<DatabaseNote>> _notesStreamController;
 
   NotesService._sharedInstance() {
     _notesStreamController =
         StreamController<List<DatabaseNote>>.broadcast(onListen: () {
-          _notesStreamController.sink.add(_notes);
-        });
+      _notesStreamController.sink.add(_notes);
+    });
   }
+
+  Stream<List<DatabaseNote>> get allNotes =>
+      _notesStreamController.stream.filter((note) {
+        final currentUser = _user;
+        if(currentUser != null){
+          return note.userId == currentUser.id;
+        } else{
+          throw UserShouldBeSetBeforeReadingAllNotes();
+        }
+      });
+
+  static final NotesService _shared = NotesService._sharedInstance();
 
   factory NotesService() => _shared;
 
-  Future<DatabaseUser> getOrCreateUser({required String email}) async {
+  Future<DatabaseUser> getOrCreateUser({
+    required String email,
+    bool setAsCurrentUser = true,
+  }) async {
     try {
       final user = await getUser(email: email);
+      if (setAsCurrentUser) {
+        _user = user;
+      }
       return user;
     } on CouldNotFindUser catch (e) {
       final createdUser = await createUser(email: email);
+      if (setAsCurrentUser) {
+        _user = createdUser;
+      }
       return createdUser;
     } catch (e) {
       rethrow;
@@ -54,10 +74,15 @@ class NotesService {
 
     await getNote(id: note.id);
 
-    final updatesCount = await db.update(noteTable, {
-      textColumn: text,
-      isSyncedWithCloudColumn: 0,
-    });
+    final updatesCount = await db.update(
+      noteTable,
+      {
+        textColumn: text,
+        isSyncedWithCloudColumn: 0,
+      },
+      where: 'id = ?',
+      whereArgs: [note.id],
+    );
 
     if (updatesCount == 0) {
       throw CouldNotUpdateNote();
@@ -309,12 +334,12 @@ const emailColumn = 'email';
 const userIdColumn = 'user_id';
 const textColumn = 'text';
 const isSyncedWithCloudColumn = 'is_synced_with_cloud';
-const createUserTable = '''CREATE TABLE IF NOT EXIST "user" (
+const createUserTable = '''CREATE TABLE IF NOT EXISTS "user" (
       "id" INTEGER NOT NULL,
       "email" TEXT NOT NULL UNIQUE,
       PRIMARY KEY("id" AUTOINCREMENT)
       );''';
-const createNoteTable = '''CREATE TABLE IF NOT EXIST "note" (
+const createNoteTable = '''CREATE TABLE IF NOT EXISTS "note" (
       "id" INTEGER NOT NULL,
       "user_id" INTEGER NOT NULL,
       "text" TEXT,
