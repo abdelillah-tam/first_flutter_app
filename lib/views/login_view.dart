@@ -1,8 +1,11 @@
 import 'package:first_flutter_app/constants/routes.dart';
-import 'package:first_flutter_app/services/auth/auth_service.dart';
+import 'package:first_flutter_app/services/auth/bloc/auth_bloc.dart';
+import 'package:first_flutter_app/services/auth/bloc/auth_event.dart';
 import 'package:first_flutter_app/utilities/dialogs/error_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../services/auth/auth_exceptions.dart';
+
 class LoginView extends StatefulWidget {
   const LoginView({Key? key}) : super(key: key);
 
@@ -52,21 +55,15 @@ class _LoginViewState extends State<LoginView> {
               decoration: const InputDecoration(hintText: 'Enter password')),
           TextButton(
               onPressed: () async {
+                final email = _email.text;
+                final password = _password.text;
                 try {
-                  final email = _email.text;
-                  final password = _password.text;
-
-                  await AuthService.firebase()
-                      .logIn(email: email, password: password);
-                  final user = AuthService.firebase().currentUser;
-
-                  if (user?.isEmailVerified ?? false) {
-                    Navigator.of(context)
-                        .pushNamedAndRemoveUntil(noteRoute, (route) => false);
-                  } else {
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                        verifyEmailRoute, (route) => false);
-                  }
+                  context.read<AuthBloc>().add(
+                        AuthEventLogIn(
+                          email,
+                          password,
+                        ),
+                      );
                 } on UserNotFoundAuthException catch (e) {
                   await showErrorDialog(context, 'User not found');
                 } on InvalidEmailAuthException catch (e) {
